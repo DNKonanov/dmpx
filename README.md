@@ -6,5 +6,7 @@ illumina pair-barcode demultiplexor
 * pandas
 * numpy
 
-## usage 
+## Usage
 `python dmpx.py --reads short.fastq`
+
+`--barcode_kit_file` - path to preferred barcode pairs file. By default is `barcodes.tsv`
