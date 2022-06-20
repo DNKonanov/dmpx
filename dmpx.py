@@ -59,8 +59,13 @@ print()
 print('-----------------Mapping-----------------')
 
 # mapping
-subprocess.run('bwa mem -t {t} {fol}/barcodes_db/adapters_i7.fasta {reads} > {fol}/barcodes_i7.sam'.format(t = args.t, fol = args.output_dir, reads=args.reads), shell=True)
-subprocess.run('bwa mem -t {t} {fol}/barcodes_db/adapters_i5.fasta {reads} > {fol}/barcodes_i5.sam'.format(t = args.t, fol = args.output_dir, reads=args.reads), shell=True)
+subprocess.run('bwa mem -t {t} {fol}/barcodes_db/adapters_i7.fasta {reads} > {fol}/barcodes_i7_full.sam'.format(t = args.t, fol = args.output_dir, reads=args.reads), shell=True)
+subprocess.run('bwa mem -t {t} {fol}/barcodes_db/adapters_i5.fasta {reads} > {fol}/barcodes_i5_full.sam'.format(t = args.t, fol = args.output_dir, reads=args.reads), shell=True)
+
+
+subprocess.run('cat {fol}/barcodes_i7_full.sam | awk -F "\t" "{print $1,$2,$3,$4,$5,$6}" > {fol}/barcodes_i7.sam'.format(fol = args.output_dir), shell=True)
+subprocess.run('cat {fol}/barcodes_i5_full.sam | awk -F "\t" "{print $1,$2,$3,$4,$5,$6}" > {fol}/barcodes_i5.sam'.format(fol = args.output_dir), shell=True)
+#subprocess.run('bwa mem -t {t} {fol}/barcodes_db/adapters_i5.fasta {reads} > {fol}/barcodes_i5.sam'.format(t = args.t, fol = args.output_dir, reads=args.reads), shell=True)
 
 
 
