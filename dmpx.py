@@ -14,6 +14,7 @@ parser = ArgumentParser()
 parser.add_argument('--reads', type=str, help='multiplexed fastq file', required=True)
 parser.add_argument('--barcode_kit_file', type=str, default='barcodes.tsv', help='barcodes table')
 parser.add_argument('--output_dir', type=str, default='Results', help='output directory name. Default is Results')
+parser.add_argument('-t', type=int, default=20, help='number of threads used')
 
 args = parser.parse_args()
 
@@ -58,8 +59,8 @@ print()
 print('-----------------Mapping-----------------')
 
 # mapping
-subprocess.run('bwa mem -t 20 {fol}/barcodes_db/adapters_i7.fasta {reads} > {fol}/barcodes_i7.sam'.format(fol = args.output_dir, reads=args.reads), shell=True)
-subprocess.run('bwa mem -t 20 {fol}/barcodes_db/adapters_i5.fasta {reads} > {fol}/barcodes_i5.sam'.format(fol = args.output_dir, reads=args.reads), shell=True)
+subprocess.run('bwa mem -t {t} {fol}/barcodes_db/adapters_i7.fasta {reads} > {fol}/barcodes_i7.sam'.format(t = args.t, fol = args.output_dir, reads=args.reads), shell=True)
+subprocess.run('bwa mem -t {t} {fol}/barcodes_db/adapters_i5.fasta {reads} > {fol}/barcodes_i5.sam'.format(t = args.t, fol = args.output_dir, reads=args.reads), shell=True)
 
 
 
