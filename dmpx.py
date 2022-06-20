@@ -13,21 +13,22 @@ parser = ArgumentParser()
 
 parser.add_argument('--reads', type=str, help='multiplexed fastq file', required=True)
 parser.add_argument('--barcode_kit_file', type=str, default='barcodes.tsv', help='barcodes table')
+parser.add_argument('--output_dir', type=str, default='Results', help='output directory name. Default is Results')
 
 args = parser.parse_args()
 
 barcodes = pd.read_csv(args.barcode_kit_file, sep=',')
 
 try:
-    os.mkdir('tmpfiles')
-    os.mkdir('tmpfiles/barcodes_db')
-    os.mkdir('tmpfiles/results')
+    os.mkdir('{}'.format(args.output_dir))
+    os.mkdir('{}/barcodes_db'.format(args.output_dir))
+    os.mkdir('{}/results'.format(args.output_dir))
 except:
     pass
 
 # create db
 
-with open('tmpfiles/barcodes_db/adapters_i7.fasta', 'w') as f:
+with open('{}/barcodes_db/adapters_i7.fasta'.format(args.output_dir), 'w') as f:
     read_cnt = 0
     for i in barcodes.index:
         
@@ -37,7 +38,7 @@ with open('tmpfiles/barcodes_db/adapters_i7.fasta', 'w') as f:
         f.write('\n')
         
 
-with open('tmpfiles/barcodes_db/adapters_i5.fasta', 'w') as f:
+with open('{}/barcodes_db/adapters_i5.fasta'.format(args.output_dir), 'w') as f:
     read_cnt = 0
     for i in barcodes.index:
         
@@ -47,17 +48,26 @@ with open('tmpfiles/barcodes_db/adapters_i5.fasta', 'w') as f:
         )
         f.write('\n')
 
+print('-----------------Indexing-----------------')
+
 # indexing
-subprocess.run('bwa index tmpfiles/barcodes_db/adapters_i7.fasta', shell=True)
-subprocess.run('bwa index tmpfiles/barcodes_db/adapters_i5.fasta', shell=True)
+subprocess.run('bwa index {}/barcodes_db/adapters_i7.fasta'.format(args.output_dir), shell=True)
+subprocess.run('bwa index {}/barcodes_db/adapters_i5.fasta'.format(args.output_dir), shell=True)
+
+print()
+print('-----------------Mapping-----------------')
 
 # mapping
-subprocess.run('bwa mem -t 20 tmpfiles/barcodes_db/adapters_i7.fasta {} > tmpfiles/barcodes_i7.sam'.format(args.reads), shell=True)
-subprocess.run('bwa mem -t 20 tmpfiles/barcodes_db/adapters_i5.fasta {} > tmpfiles/barcodes_i5.sam'.format(args.reads), shell=True)
+subprocess.run('bwa mem -t 20 {fol}/barcodes_db/adapters_i7.fasta {reads} > {fol}/barcodes_i7.sam'.format(fol = args.output_dir, reads=args.reads), shell=True)
+subprocess.run('bwa mem -t 20 {fol}/barcodes_db/adapters_i5.fasta {reads} > {fol}/barcodes_i5.sam'.format(fol = args.output_dir, reads=args.reads), shell=True)
 
+
+
+print()
+print('-----------------SAM files processing-----------------')
 
 sam_i7 = pd.read_csv(
-    'tmpfiles/barcodes_i7.sam', 
+    '{}/barcodes_i7.sam'.format(args.output_dir), 
     sep='\t', 
     comment='@', 
     header=None, 
@@ -69,7 +79,7 @@ sam_i7 = sam_i7[sam_i7.flag.isin([0,16])]
 
 
 sam_i5 = pd.read_csv(
-    'tmpfiles/barcodes_i5.sam', 
+    '{}/barcodes_i5.sam'.format(args.output_dir), 
     sep='\t', 
     comment='@', 
     header=None, 
@@ -85,11 +95,16 @@ merged_df.sort_values(by=['refseq_x', 'refseq_y'], inplace=True)
 
 
 
+print()
+print('-----------------Getting barcode variants-----------------')
 variants = [(barcodes.i7[i], barcodes.i5[i]) for i in barcodes.index]
 
 matches = 0
 mismatches = 0
 drop_index = []
+
+print()
+print('-----------------Filtering barcode variants-----------------')
 for i in merged_df.index: 
     if (merged_df.refseq_x[i], merged_df.refseq_y[i]) in variants:
         matches += 1
@@ -100,7 +115,11 @@ merged_df = merged_df[~merged_df.index.isin(drop_index)]
 
 # save trimmed reads as one file
 
-f = open('tmpfiles/passed_reads.fastq', 'w')
+
+print()
+print('-----------------Reads filtering-----------------')
+
+f = open('{}/passed_reads.fastq'.format(args.output_dir), 'w')
 
 fin = parse(args.reads, format='fastq')
 
@@ -118,9 +137,14 @@ for rec in fin:
     
     cigar1, cigar2 = vls[5], vls[10]
     
-    len_l = int(cigar1.split('M')[-1][:-1])
-    len_r = int(cigar2.split('M')[-1][:-1])
-    
+    try:
+        len_l = int(cigar1.split('M')[-1][:-1])
+        len_r = int(cigar2.split('M')[-1][:-1])
+
+    except:
+        print(desc, cigar1, cigar2)
+        continue
+        
     if vls[1] == 16:
         len_l, len_r = len_r, len_l
     
@@ -129,8 +153,10 @@ for rec in fin:
 f.close()
 
 
+print()
+print('-----------------Reads demultiplexing-----------------')
 # demultiplex reads
-trimmed_reads = parse('tmpfiles/passed_reads.fastq', format='fastq')
+trimmed_reads = parse('{}/passed_reads.fastq'.format(args.output_dir), format='fastq')
 
 files = {}
 
@@ -139,7 +165,7 @@ for rec in trimmed_reads:
     vls = merged_df[merged_df.read == desc].values[0]
     
     if (vls[2], vls[7]) not in files:
-        files[(vls[2], vls[7])] = open('tmpfiles/results/{}_{}_barcode.fastq'.format(vls[2], vls[7]), 'w')
+        files[(vls[2], vls[7])] = open('{}/results/{}_{}_barcode.fastq'.format(args.output_dir, vls[2], vls[7]), 'w')
     
     files[(vls[2], vls[7])].write(
         rec.format('fastq')
@@ -147,3 +173,5 @@ for rec in trimmed_reads:
 
 for pair in files:
     files[pair].close()
+
+print('Done!')
