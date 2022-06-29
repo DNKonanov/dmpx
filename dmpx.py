@@ -21,6 +21,14 @@ args = parser.parse_args()
 
 barcodes = pd.read_csv(args.barcode_kit_file, sep=',')
 
+barcode_ids = {}
+
+for i in barcodes.index:
+    barcode_ids[(barcodes.i7[i], barcodes.i5[i])] = barcodes.id[i]
+
+
+print(barcodes)
+
 try:
     os.mkdir('{}'.format(args.output_dir))
     os.mkdir('{}/barcodes_db'.format(args.output_dir))
@@ -181,10 +189,11 @@ files = {}
 
 for rec in trimmed_reads:
     desc = rec.description.split(' ')[0]
-    vls = merged_df[merged_df.read == desc].values[0]
+    
+    vls = vls_data[desc]
     
     if (vls[2], vls[7]) not in files:
-        files[(vls[2], vls[7])] = open('{}/results/{}_{}_barcode.fastq'.format(args.output_dir, vls[2], vls[7]), 'w')
+        files[(vls[2], vls[7])] = open('{}/results/{}_barcode.fastq'.format(args.output_dir, barcode_ids[(vls[2], vls[7])]), 'w')
     
     files[(vls[2], vls[7])].write(
         rec.format('fastq')
