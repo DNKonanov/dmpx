@@ -1,4 +1,5 @@
 from ast import parse
+from heapq import merge
 import pandas as pd
 import numpy as np
 from argparse import ArgumentParser
@@ -117,6 +118,7 @@ for i in merged_df.index:
         drop_index.append(i)
 merged_df = merged_df[~merged_df.index.isin(drop_index)]
 
+merged_df.reset_index(drop=True, inplace=True)
 
 # save trimmed reads as one file
 
@@ -133,11 +135,14 @@ passed_reads = set(merged_df.read)
 
 overhang = 20
 
+
 vls_data = {}
 
+
 for df_i in merged_df.index:
+
     _vls = list(merged_df.iloc[df_i])
-    vls_data[merged_df.read] = _vls
+    vls_data[merged_df.read[df_i]] = _vls
 
 
 
@@ -165,6 +170,7 @@ for rec in fin:
     f.write(rec[-len_l+overhang:-(len(rec.seq) - len_r)-overhang].format('fastq'))
     
 f.close()
+
 
 print()
 print('-----------------Reads demultiplexing-----------------')
