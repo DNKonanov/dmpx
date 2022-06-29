@@ -193,7 +193,7 @@ for rec in trimmed_reads:
     vls = vls_data[desc]
     
     if (vls[2], vls[7]) not in files:
-        files[(vls[2], vls[7])] = open('{}/results/{}_barcode.fastq'.format(args.output_dir, barcode_ids[(vls[2], vls[7])]), 'w')
+        files[(vls[2], vls[7])] = open('{}/results/{}.fastq'.format(args.output_dir, barcode_ids[(vls[2], vls[7])]), 'w')
     
     files[(vls[2], vls[7])].write(
         rec.format('fastq')
