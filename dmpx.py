@@ -133,12 +133,21 @@ passed_reads = set(merged_df.read)
 
 overhang = 20
 
+vls_data = {}
+
+for df_i in merged_df.index:
+    _vls = list(merged_df.iloc[df_i])
+    vls_data[merged_df.read] = _vls
+
+
+
+
 for rec in fin:
     desc = rec.description.split(' ')[0]
     if desc not in passed_reads:
         continue
     
-    vls = merged_df[merged_df.read == desc].values[0]
+    vls = vls_data[desc]
     
     cigar1, cigar2 = vls[5], vls[10]
     
@@ -156,7 +165,6 @@ for rec in fin:
     f.write(rec[-len_l+overhang:-(len(rec.seq) - len_r)-overhang].format('fastq'))
     
 f.close()
-
 
 print()
 print('-----------------Reads demultiplexing-----------------')
