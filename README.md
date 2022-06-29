@@ -1,5 +1,5 @@
 # dmpx
-illumina pair-barcode demultiplexor
+Custom pair-barcode demultiplexor
 
 ## Dependencies
 * biopython
