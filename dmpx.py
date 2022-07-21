@@ -15,6 +15,7 @@ parser = ArgumentParser()
 parser.add_argument('--reads', type=str, help='multiplexed fastq file', required=True)
 parser.add_argument('--barcode_kit_file', type=str, default=os.path.dirname(os.path.abspath(__file__)) + '/barcodes.tsv', help='barcodes table')
 parser.add_argument('--output_dir', type=str, default='Results', help='output directory name. Default is Results')
+parser.add_argument('--hang', type=int, default=20, help='Overhang length')
 parser.add_argument('-t', type=int, default=20, help='number of threads used')
 
 args = parser.parse_args()
@@ -141,7 +142,7 @@ fin = parse(args.reads, format='fastq')
 
 passed_reads = set(merged_df.read)
 
-overhang = 20
+overhang = args.hang
 
 
 vls_data = {}
